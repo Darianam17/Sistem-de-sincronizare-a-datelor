@@ -1,0 +1,58 @@
+Documentație proiect: Sistem de sincronizare a datelor
+Student: Popescu Maria-Dariana
+Temă: Practică de domeniu – 2025
+
+Scopul proiectului
+Acest proiect implementează un sistem simplificat de sincronizare a fișierelor între un director local și un director remote, într-un mod asemănător cu aplicația Syncthing. Scopul este ca orice modificare realizată local (creare, editare, ștergere de fișiere) să fie reflectată automat și în locația remote.
+
+ Noțiuni fundamentale utilizate
+Concept	Explicație
+Sincronizare	Procesul prin care se asigură că două directoare (local și remote) conțin aceleași fișiere, în aceeași versiune
+Local	Directorul de lucru de pe sistemul de bază (utilizatorul curent)
+Remote	Un alt utilizator sau sistem (ex: user testuser sau alt PC), unde sunt copiate fișierele
+inotify	Mecanism al Linux-ului care permite detectarea în timp real a modificărilor de fișiere
+ssh / scp	Mecanisme de conectare securizată și copiere a fișierelor între sisteme
+sume de control (hash-uri)	Funcții care generează o amprentă unică pentru un fișier. Sunt folosite pentru a verifica dacă un fișier s-a modificat (ex: md5, sha256)
+lsof	Comandă care verifică dacă un fișier este deschis (folosit de alt proces), pentru a evita suprascrierea lui
+
+
+ Funcționalități implementate
+1.	Monitorizarea unui director local
+o	Directorul local este urmărit în timp real pentru a detecta modificări (fișiere create, modificate sau șterse).
+2.	Verificarea modificărilor prin sume de control
+o	Pentru fiecare fișier modificat se calculează un hash (ex: SHA256) și se compară cu versiunea remote, pentru a decide dacă este necesară sincronizarea.
+3.	Sincronizarea fișierelor către un director remote
+o	Fișierele modificate sunt transferate automat prin SCP (Secure Copy) către utilizatorul remote, în directorul desemnat.
+4.	Sincronizare completă periodică
+o	O dată la 10 minute se face o scanare completă a directorului local și se sincronizează toate fișierele care au fost modificate față de remote.
+5.	Copiere sigură și control al accesului
+o	Fișierele nu sunt înlocuite direct, ci copiate temporar și înlocuite doar dacă fișierul original nu este folosit (verificat cu lsof).
+
+ Structura generală a sistemului
+•	Utilizator local: darianam
+o	Director de lucru: /home/darianam/source/
+•	Utilizator remote: testuser (sau un alt sistem Linux)
+o	Director de destinație: /home/testuser/destination/
+•	Canal de comunicare: conexiune securizată prin SSH, folosind SCP
+
+
+
+
+ Fluxul procesului de sincronizare
+1.	Se lucrează în directorul local (source/)
+2.	Scriptul detectează automat orice modificare
+3.	Verifică dacă fișierul s-a schimbat (prin hash)
+4.	Dacă da:
+o	Se trimite fișierul remote sub formă temporară
+o	Se verifică dacă fișierul de destinație nu e utilizat
+o	Se înlocuiește fișierul doar în condiții sigure
+5.	Periodic (la fiecare 10 minute) se reface o sincronizare completă
+
+ Obiective atinse
+•	Înțelegerea și utilizarea sistemului inotify pentru detecția modificărilor în timp real
+•	Aplicarea comenzilor ssh, scp, lsof, sha256sum într-un context real
+•	Crearea unui mecanism sigur de sincronizare automată de fișiere
+•	Automatizarea unui proces real, asemănător unui tool profesional (ex: Syncthing)
+
+
+
