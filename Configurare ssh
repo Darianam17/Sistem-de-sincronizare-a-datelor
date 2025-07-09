@@ -1,0 +1,73 @@
+Documentație: Instalare și Configurare SSH pe Linux
+
+ Scop: Permite autentificarea SSH fără parolă între utilizatori pe același sistem (sau între calculatoare) folosind chei SSH.
+
+1. Instalarea OpenSSH Server
+Pentru a putea utiliza SSH pe sistemul tău, trebuie să instalezi serverul OpenSSH (pentru conexiuni SSH).
+
+Pas 1: Instalează serverul SSH
+sudo apt update
+sudo apt install openssh-server
+
+ Verifică instalarea:
+ssh -V
+Ar trebui să vezi versiunea OpenSSH.
+
+2. Generarea Cheii SSH pentru Autentificare
+Pentru a te conecta fără parolă, trebuie să creezi o cheie SSH (dacă nu ai deja una).
+
+Pas 2: Generează cheia SSH
+ssh-keygen
+Apasă Enter pentru a accepta locația implicită a fișierului (~/.ssh/id_ed25519).
+
+Lasă câmpul pentru passphrase gol (sau setează o parolă dacă vrei să o protejezi).
+
+După completare, cheia va fi generată și va fi salvată în fișierele:
+
+Cheia privată: ~/.ssh/id_ed25519
+
+Cheia publică: ~/.ssh/id_ed25519.pub
+
+3. Copierea Cheii Publice pe Sistemul Remote (sau alt utilizator)
+Pentru a permite autentificarea fără parolă, trebuie să adăugi cheia publică pe serverul remote (sau pe alt utilizator local).
+
+Pas 3: Copiază cheia publică pe utilizatorul remote
+ssh-copy-id utilizator@localhost
+🔹 Înlocuiește utilizator cu numele utilizatorului remote (ex: darianapopescu).
+🔹 Îți va cere parola utilizatorului remote doar o singură dată.
+
+4. Verificarea Conexiunii Fără Parolă
+Pas 4: Testează conexiunea fără parolă
+ssh utilizator@localhost
+🔹 Dacă nu îți cere parolă și te conectezi direct, atunci totul este configurat corect.
+
+5. Permisiuni Corecte pentru Fișierele SSH
+Asigură-te că fișierele SSH au permisiunile corecte pentru securitate:
+
+Pas 5: Setează permisiuni corecte
+sudo chmod 700 ~/.ssh
+sudo chmod 600 ~/.ssh/id_ed25519
+sudo chmod 600 ~/.ssh/authorized_keys
+
+6. Configurarea SSH pentru a Permite Autentificare cu Chei
+În unele cazuri, este necesar să verifici configurația serverului SSH pentru a permite autentificarea cu chei și a dezactiva parola.
+
+Pas 6: Modifică fișierul de configurare al SSH
+sudo nano /etc/ssh/sshd_config
+Asigură-te că aceste linii sunt setate corect:
+
+PasswordAuthentication no
+PubkeyAuthentication yes
+
+Pas 7: Repornirea serviciului SSH
+sudo systemctl restart ssh
+
+7. Verificarea și Depanarea
+Dacă întâmpini probleme, iată câteva comenzi utile:
+
+Pas 8: Verifică statusul SSH
+sudo systemctl status ssh
+
+Pas 9: Verifică fișierul authorized_keys
+Verifică că cheia ta publică este corectă în fișierul ~/.ssh/authorized_keys al utilizatorului remote:
+cat ~/.ssh/authorized_keys
