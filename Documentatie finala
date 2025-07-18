@@ -1,0 +1,74 @@
+ Sistem de sincronizare fișiere local–remote
+
+Scopul proiectului
+
+Am realizat un sistem de sincronizare a fișierelor între un director local și unul „remote”, inspirat de funcționalitatea `syncthing`. Obiectivul meu a fost să pot sincroniza în timp real fișierele modificate, create sau șterse dintr-un folder local, și să implementez o sincronizare completă periodică, folosind doar comenzi de Bash și utilitare simple (fără aplicații externe dedicate).
+
+Etapele proiectului
+
+Inițial: sincronizare între doi useri Linux, prin SSH
+
+Am început proiectul implementând sincronizarea între doi utilizatori de Linux:
+
+* `darianam` (utilizator local)
+* `darianapopescu` (utilizator „remote”)
+
+Am folosit:
+
+* `inotifywait` pentru a detecta în timp real modificările din directorul local
+* `scp` și `ssh` pentru a copia fișierele modificate pe remote și a le înlocui doar dacă era necesar
+* `sha256sum` pentru a verifica dacă un fișier s-a modificat
+* `lsof` pentru a mă asigura că fișierul de pe remote nu este folosit în momentul înlocuirii
+
+Am implementat și mecanismul de copiere sigură cu fișier temporar `.temp_file`, care este mutat peste fișierul final doar dacă acesta nu este folosit.
+
+
+
+Adaptare: sincronizare între Linux și Windows (folder partajat)
+
+După prima versiune, am adaptat proiectul astfel încât sincronizarea să se facă între un sistem Linux (VM) și Windows, fără SSH.
+
+Am configurat un folder partajat în VirtualBox (`/media/sf_SO_project`) care permite accesul bidirecțional între cele două sisteme. Pentru a putea accesa folderul partajat, am adăugat utilizatorul meu în grupul `vboxsf`.
+
+Am păstrat aceeași logică și structură ca în versiunea SSH:
+
+* detectare în timp real a modificărilor locale
+* copiere doar dacă fișierul s-a modificat
+* protecție cu `lsof`
+* înlocuire prin `.temp_file`
+
+
+
+Sincronizare completă la fiecare 10 minute
+
+Pentru a respecta cerința de sincronizare periodică, am implementat în același script și o secțiune care verifică toate fișierele din directorul local, și le sincronizează complet pe remote **doar dacă au fost modificate**.
+
+Această parte se execută doar dacă scriptul este apelat cu argumentul `cron`.
+
+Am configurat un `cronjob` astfel:
+
+*/10 * * * * /home/darianam/sync_full.sh cron >> /home/darianam/sync_cron.log 2>&1
+
+Această sincronizare:
+
+* copiază doar fișierele care s-au modificat
+* înlocuiește doar dacă nu sunt deschise (cu `lsof`)
+* șterge automat din remote fișierele care au fost șterse local
+
+Ce face scriptul meu
+
+* Detectează automat și sincronizează modificările în timp real (prin `inotifywait`)
+* Poate fi rulat periodic cu `cron` pentru sincronizare completă
+* Verifică modificările prin `sha256sum`
+* Folosește `.temp_file` pentru siguranță
+* Nu înlocuiește fișierele dacă sunt deschise în alt program
+* Șterge fișierele de pe remote dacă au fost șterse local
+
+Observații personale
+
+* Scriptul este eficient, evită sincronizări inutile și previne conflictele cu fișiere deschise
+* Am trecut de la o sincronizare clasică prin SSH la o soluție bazată pe folder partajat între sistemele de operare
+* Am învățat cum funcționează `inotifywait`, `scp`, `lsof`, `cron` și cum pot să implementez o soluție simplă de sync fără aplicații externe
+
+
+
